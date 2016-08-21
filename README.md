@@ -41,3 +41,24 @@ OK
 
 ```
 The cache is now available in the Space for our caching needs.
+
+We can get our details about our Cache by using the cf service command.
+
+```shell
+
+ cf-cachable git:(master) cf service my-redis
+
+Service instance: my-redis
+Service: rediscloud
+Plan: 30mb
+Description: Enterprise-Class Redis for Developers
+Documentation url: http://docs.run.pivotal.io/marketplace/services/rediscloud.html
+Dashboard: https://cloudfoundry.appdirect.com/api/custom/cloudfoundry/v2/sso/start?serviceUuid=aa34b274-071a-477d-9169-143af9507d8a
+
+Last Operation
+Status: create succeeded
+Message: 
+Started: 2016-08-21T23:09:37Z
+Updated: 
+
+```
