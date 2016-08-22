@@ -20,7 +20,7 @@ import org.springframework.data.redis.core.RedisTemplate;
  */
 public class CacheMangerConfig extends CachingConfigurerSupport {
 	
-	@Value("${redis-service-name")
+	@Value("${redis-service-name}")
 	private String redisServiceName;
 	
 	@Bean
@@ -42,8 +42,6 @@ public class CacheMangerConfig extends CachingConfigurerSupport {
 	  @Bean
 	  public CacheManager cacheManager(RedisTemplate redisTemplate) {
 	    RedisCacheManager cacheManager = new RedisCacheManager(redisTemplate);
-
-	    // Number of seconds before expiration. Defaults to unlimited (0)
 	    cacheManager.setDefaultExpiration(300);
 	    return cacheManager;
 	  }

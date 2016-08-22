@@ -1,0 +1,9 @@
+---
+applications:
+- name: cacheable-redis
+  memory: 1G
+  instances: 1
+  path: target/cacheable-redis.jar
+  buildpack: https://github.com/cloudfoundry/java-buildpack
+  services:
+    - my-redis

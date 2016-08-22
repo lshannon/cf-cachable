@@ -41,16 +41,18 @@ public class HeroController {
 		heroes.put("bridgette", "bridgetkromhout");
 	}
 	
-	@Cacheable(cacheNames = "hero")
 	@RequestMapping("/getTwitterHandle/{name}")
+	@Cacheable(cacheNames = "hero")
 	public String getHero(@PathVariable String name) {
 		String result = expensiveLookUp(name);
-		log.debug("+++++++++++++++++++++++ Returning hero: " + result + "+++++++++++++++++++++++");
 		return result;
 	}
 
+
 	private String expensiveLookUp(String name) {
+		log.debug("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 		log.debug("$$$$$$$$$$$$$$$ In the expensive look up for the name: " + name + " $$$$$$$$$$$$$$$");
+		log.debug("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
 		return heroes.get(name);
 	}
 	
@@ -63,6 +65,5 @@ class HomeController {
 	public String home() {
 		return "Run /v1/getTwitterHandle/{name} to find the twitter handle of your hero";
 	}
-
 }
 
