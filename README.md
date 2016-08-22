@@ -62,3 +62,28 @@ Started: 2016-08-21T23:09:37Z
 Updated: 
 
 ```
+
+### Configuring The Application To Use Redis
+
+In the application.properties:
+
+```shell
+
+logging.level.com.lukeshannon.controller=DEBUG
+redis-service-name=${vcap.services.rediscloud.myredis.name}
+
+```
+
+In our Config class:
+
+```java
+
+```
+
+In our manifest:
+
+```shell
+
+```
+
+
