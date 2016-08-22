@@ -243,11 +243,11 @@ o.s.b.c.web.OrderedRequestContextFilter  : Bound request context to thread: org.
 
 ### Working With Gemfire
 
-The only thing that needs to change in the previous example is how the CacheManger is obtained in the configuration class. Note in the following Configuration for Gemfire:
+The only thing that needs to change in the previous example is how the CacheManger is obtained in the configuration class. Note in the following configuration changes for Gemfire:
 
-1. A Client Cache must friend be obtained using the name of the service created on PCF
-2. The client cache is wrapped in a Cache Manager
-3. A Region needs to be locally created to contain the entries that will be cached. In this case we set the local Region to be a PROXY (meaning it goes to the main cache for each look up). However this can also be a CACHING PROXY, meaning we can have a local cache in our application that is fully configurable (this is a near cache pattern).
+1. A ClientCache must friend be obtained using the name of the service created on PCF (http://data-docs-samples.cfapps.io/docs-gemfire/81/javadocs/japi/com/gemstone/gemfire/cache/client/ClientCache.html)
+2. The ClientCache is wrapped the Cache Manager
+3. A Region (http://data-docs-samples.cfapps.io/docs-gemfire/81/javadocs/japi/com/gemstone/gemfire/cache/Region.html) needs to be locally created to contain the entries that will be cached. In this case we set the local Region to be a PROXY (meaning it goes to the main cache for each look up). However this can also be a CACHING PROXY, meaning we can have a local cache in our application that is fully configurable (this is a near cache pattern). The following outlines the options for configuring a client region http://docs.spring.io/spring-data-gemfire/docs/current/reference/html/#bootstrap:region:client.
 
 ```java
 
