@@ -3,15 +3,15 @@
  */
 package com.lukeshannon.controller;
 
-import java.util.HashMap;
-import java.util.Map;
-import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.lukeshannon.HeroService;
+import com.lukeshannon.RedisKey;
 
 /**
  * @author lshannon
@@ -23,47 +23,28 @@ public class HeroController {
 	
 	private static final Logger log = LoggerFactory.getLogger(HeroController.class);
 	
-	private Map<String, String> heroes;
+	private HeroService heroService;
 	
-	@PostConstruct
-	public void initHeroes() {
-		heroes = new HashMap<String,String>();
-		heroes.put("john", "john_blum");
-		heroes.put("josh", "starbuxman");
-		heroes.put("stu", "svrc");
-		heroes.put("dormain", "DormainDrewitz");
-		heroes.put("cornelia", "cdavisafc");
-		heroes.put("saman", "err_sage");
-		heroes.put("casey", "caseywest");
-		heroes.put("kenny", "kennybastani");
-		heroes.put("jim", "JavaFXpert");
-		heroes.put("mark", "MkHeck");
-		heroes.put("bridgette", "bridgetkromhout");
+	public HeroController(HeroService heroService) {
+		this.heroService = heroService;
 	}
-	
-	@RequestMapping("/getTwitterHandle/{name}")
-	@Cacheable(cacheNames = "hero")
+
+	@GetMapping("/getTwitterHandle/{name}")
 	public String getHero(@PathVariable String name) {
-		String result = expensiveLookUp(name);
+		log.info("Making a call to the Hero service");
+		RedisKey key = new RedisKey();
+		key.setId(name);
+		key.setName(name);
+		String result = heroService.expensiveLookUp(key);
+		log.info("Returning result: " + result);
+		if (result == null) {
+			return "No result for: " + name;
+		}
 		return result;
 	}
 
 
-	private String expensiveLookUp(String name) {
-		log.debug("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-		log.debug("$$$$$$$$$$$$$$$ In the expensive look up for the name: " + name + " $$$$$$$$$$$$$$$");
-		log.debug("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-		return heroes.get(name);
-	}
 	
-}
-
-@RestController
-class HomeController {
-
-	@RequestMapping("/")
-	public String home() {
-		return "Run /v1/getTwitterHandle/{name} to find the twitter handle of your hero";
-	}
+	
 }
 
