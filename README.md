@@ -9,7 +9,7 @@ This sample will demonstate using @Cacheable. This standard provides an abstract
 
 ## Caches Used
 
-This sample will show how to work with a Redis and Gemfire Cache
+This sample will show how to work with a Redis service created using the CF Marketplace and bound to the application during a `cf push` operation
 
 ### Working With Redis
 
