@@ -1,2 +1,4 @@
+cf-cacheable-redis/.settings
+cf-cacheable-redis/bin
 cf-cacheable-redis/target
 .recommenders
