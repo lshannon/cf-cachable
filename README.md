@@ -65,7 +65,7 @@ Updated:
 
 #### Configuring The Application To Use Redis
 
-In the pom.xml we give the following dependancies. These are for a Spring Boot Rest API webapplication. This was developed for Spring Boot 1.3.7.RELEASE.
+In the pom.xml we give the following dependancies. These are for a Spring Boot Rest API webapplication.
 
 ```xml
 
@@ -132,51 +132,26 @@ public class CfCacheableRedisApplication {
 
 ```
 
-Our Config class lets Spring Boot know where the Cache can be found, the `redis-service-name` is set in the application config file:
+Our Config class lets Spring Boot know where the Cache to create the Cache Manager that will be backing the @Cachable Annotation:
 
 ```java
 
+@Configuration
 public class CacheMangerConfig extends CachingConfigurerSupport {
-	
-	@Value("${redis-service-name}")
-	private String redisServiceName;
-	
-	@Bean
-	  public RedisConnectionFactory redisConnectionFactory() {
-		CloudFactory cloudFactory = new CloudFactory();
-        Cloud cloud = cloudFactory.getCloud();
-        RedisServiceInfo serviceInfo = (RedisServiceInfo) cloud.getServiceInfo(redisServiceName);
-        String serviceID = serviceInfo.getId();
-        return cloud.getServiceConnector(serviceID, RedisConnectionFactory.class, null);
-	  }
 
 	  @Bean
-	  public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory cf) {
-	    RedisTemplate<String, String> redisTemplate = new RedisTemplate<String, String>();
-	    redisTemplate.setConnectionFactory(cf);
-	    return redisTemplate;
-	  }
-
-	  @Bean
-	  public CacheManager cacheManager(RedisTemplate redisTemplate) {
-	    RedisCacheManager cacheManager = new RedisCacheManager(redisTemplate);
-	    cacheManager.setDefaultExpiration(300);
+	  public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
+	    RedisCacheManager cacheManager = RedisCacheManager.create(redisConnectionFactory);
 	    return cacheManager;
 	  }
 
 }
 
 ```
-In the application.properties we dynamically obtain the name of the Redis service running in the PCF space.
 
-```shell
+The RedisConnectionFactory that is passed it to create out cacheManager is being created by Spring Cloud Connector dependancies.
 
-logging.level.com.lukeshannon.controller=DEBUG
-redis-service-name=${vcap.services.rediscloud.myredis.name}
-
-```
-
-In our manifest we bind the redis service to our application (this is how the VCAP Services of the application is populated).
+In our manifest we bind the redis service to our application:
 
 ```shell
 
@@ -187,6 +162,7 @@ applications:
   instances: 1
   path: target/cacheable-redis.jar
   buildpack: https://github.com/cloudfoundry/java-buildpack
+  random-route: true
   services:
     - my-redis
 
@@ -235,59 +211,5 @@ o.s.b.c.web.OrderedRequestContextFilter  : Bound request context to thread: org.
 2016-08-21T22:54:08.21-0400 [RTR/5]      OUT cacheable-redis.cfapps.io - [22/08/2016:02:54:08.199 +0000] "GET /v1/getTwitterHandle/kenny HTTP/1.1" 200 0 12 "-" "curl/7.43.0" 10.10.66.125:50014 x_forwarded_for:"184.151.190.137" x_forwarded_proto:"http" vcap_request_id:6e551031-05ae-43b4-758f-7a0d73511b3a response_time:0.016591925 app_id:74e94e7c-9212-4d44-b399-ae245056d67e
 
 ```
-
-### Working With Gemfire
-
-The only thing that needs to change in the previous example is how the CacheManger is obtained in the configuration class. Note in the following configuration changes for Gemfire:
-
-1. A ClientCache must friend be obtained using the name of the service created on PCF (http://data-docs-samples.cfapps.io/docs-gemfire/81/javadocs/japi/com/gemstone/gemfire/cache/client/ClientCache.html)
-2. The ClientCache is wrapped the Cache Manager
-3. A Region (http://data-docs-samples.cfapps.io/docs-gemfire/81/javadocs/japi/com/gemstone/gemfire/cache/Region.html) needs to be locally created to contain the entries that will be cached. In this case we set the local Region to be a PROXY (meaning it goes to the main cache for each look up). However this can also be a CACHING PROXY, meaning we can have a local cache in our application that is fully configurable (this is a near cache pattern). The following outlines the options for configuring a client region http://docs.spring.io/spring-data-gemfire/docs/current/reference/html/#bootstrap:region:client.
-
-```java
-
-@Configuration
-@Profile({ "cloud" })
-public class CacheConfiguration extends AbstractCloudConfig {
-
-	@Value("${gemfire-service-name}")
-	private String gemfireServiceName;
-	
-	private ServiceConnectorConfig createGemfireConnectorConfig() {
-		GemfireServiceConnectorConfig gemfireConfig = new GemfireServiceConnectorConfig();
-		return gemfireConfig;
-	}
-
-
-	@Bean
-	ClientCache clientCache() {
-		CloudFactory cloudFactory = new CloudFactory();
-		Cloud cloud = cloudFactory.getCloud();
-	    	ClientCache cache = cloud.getServiceConnector(gemfireServiceName, ClientCache.class, createGemfireConnectorConfig());
-		return cache;
-	}
-	
-	@Bean
-	 public CacheManager cacheManager(final Cache gemfireCache) {
-		 return new GemfireCacheManager() {{
-	            setCache(gemfireCache);
-	        }};
-	 }
-
-
-	@Bean
-	public ClientRegionFactoryBean<String, String> heroRegion(ClientCache cache) {
-		ClientRegionFactoryBean<String,String> region = new ClientRegionFactoryBean<>();
-		region.setCache(cache);
-		region.setName("hero");
-		region.setShortcut(ClientRegionShortcut.PROXY);
-		return region;
-	}
-
-}
-
-```
-
-For questions with this sample please contact luke.shannon at gmail dot com.
 
 
