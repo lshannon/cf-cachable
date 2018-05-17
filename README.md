@@ -83,7 +83,6 @@ In the pom.xml we give the following dependancies. These are for a Spring Boot R
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
-			<version>1.4.0.RELEASE</version>
 		</dependency>
 		<!-- End Caching Dependancies -->
 		
@@ -95,10 +94,6 @@ In the pom.xml we give the following dependancies. These are for a Spring Boot R
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-cloudfoundry-connector</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-localconfig-connector</artifactId>
 		</dependency>
 		<!-- End PCF Connector Dependancies -->
 		
