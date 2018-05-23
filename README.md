@@ -212,4 +212,81 @@ o.s.b.c.web.OrderedRequestContextFilter  : Bound request context to thread: org.
 
 ```
 
+# Warming Up The Cache
+
+PCF has great support for tasks:
+
+https://docs.pivotal.io/pivotalcf/2-0/devguide/using-tasks.html
+
+These are applications that are ran in a container once, then the container is destroyed. However the application remains in your space allowing for logs to be viewed and of course the application to be executed again.
+
+The cf-cache-warm-up application does this by hitting our caching application with specific values to get the value from our backing store and into the cache (thus improving performance).
+
+Here is how the applications is deployed:
+
+```shell
+
+cf push --health-check-type none -p target/cf-cache-warm-up-0.0.1-SNAPSHOT.jar cache-warmer
+
+```
+The application will show in the app list as started, but note that there are 0 instances of it.
+
+```shell
+
+name                   requested state   instances   memory   disk   urls
+cache-warmer           started           0/1         1G       1G     cache-warmer.cfapps.io
+cacheable-redis-luke   started           1/1         1G       1G     cacheable-redis-luke.cfapps.io
+
+```
+
+To run this task:
+
+```shell
+
+ cf-cachable git:(master) cf run-task cache-warmer ".java-buildpack/open_jdk_jre/bin/java org.springframework.boot.loader.JarLauncher --warmUpName=john" --name warm-it-up
+Creating task for app cache-warmer in org cloud-native / space cdp-developer-training as luke.shannon@gmail.com...
+OK
+
+Task has been submitted successfully for execution.
+task name:   warm-it-up
+task id:     6
+
+```
+We can see based on the id, this is the 6th time the task has been ran. Notice also an arguement is passed in called warmUpName. This is accessed in the Boot application using @Value.
+
+In checking the logs we can see our task was performed before the application shut down.
+
+```shell
+
+cf logs cache-warmer --recent
+
+2018-05-23T15:53:15.53-0400 [CELL/0] OUT Cell cd3a6a7e-8bb3-4631-a839-296095130133 successfully created container for instance c549065a-3a87-40af-9b45-44a18900c3ca
+   2018-05-23T15:53:22.11-0400 [APP/TASK/warm-it-up/0] OUT   .   ____          _            __ _ _
+   2018-05-23T15:53:22.11-0400 [APP/TASK/warm-it-up/0] OUT  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+   2018-05-23T15:53:22.11-0400 [APP/TASK/warm-it-up/0] OUT ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+   2018-05-23T15:53:22.11-0400 [APP/TASK/warm-it-up/0] OUT  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+   2018-05-23T15:53:22.11-0400 [APP/TASK/warm-it-up/0] OUT   '  |____| .__|_| |_|_| |_\__, | / / / /
+   2018-05-23T15:53:22.11-0400 [APP/TASK/warm-it-up/0] OUT  =========|_|==============|___/=/_/_/_/
+   2018-05-23T15:53:22.12-0400 [APP/TASK/warm-it-up/0] OUT  :: Spring Boot ::        (v2.0.2.RELEASE)
+   2018-05-23T15:53:22.35-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:22.350  INFO 7 --- [           main] pertySourceApplicationContextInitializer : 'cloud' property source added
+   2018-05-23T15:53:22.36-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:22.362  INFO 7 --- [           main] nfigurationApplicationContextInitializer : Reconfiguration enabled
+   2018-05-23T15:53:22.39-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:22.384  INFO 7 --- [           main] c.lukeshannon.CfCacheWarmUpApplication   : Starting CfCacheWarmUpApplication on c549065a-3a87-40af-9b45-44a18900c3ca with PID 7 (/home/vcap/app/BOOT-INF/classes started by vcap in /home/vcap/app)
+   2018-05-23T15:53:22.39-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:22.395  INFO 7 --- [           main] c.lukeshannon.CfCacheWarmUpApplication   : The following profiles are active: cloud
+   2018-05-23T15:53:22.53-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:22.532  INFO 7 --- [           main] s.c.a.AnnotationConfigApplicationContext : Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@43556938: startup date [Wed May 23 19:53:22 UTC 2018]; root of context hierarchy
+   2018-05-23T15:53:24.37-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:24.375  INFO 7 --- [           main] o.s.j.e.a.AnnotationMBeanExporter        : Registering beans for JMX exposure on startup
+   2018-05-23T15:53:24.38-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:24.387  INFO 7 --- [           main] o.s.c.support.DefaultLifecycleProcessor  : Starting beans in phase 0
+   2018-05-23T15:53:24.41-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:24.410  INFO 7 --- [           main] c.lukeshannon.CfCacheWarmUpApplication   : Started CfCacheWarmUpApplication in 2.803 seconds (JVM running for 4.227)
+   2018-05-23T15:53:24.78-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:24.786  INFO 7 --- [           main] c.lukeshannon.CfCacheWarmUpApplication   : Warming up cache for value john
+   2018-05-23T15:53:25.30-0400 [APP/TASK/warm-it-up/0] OUT HTTP/1.1 200 OK
+   2018-05-23T15:53:25.31-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:25.316  INFO 7 --- [       Thread-2] s.c.a.AnnotationConfigApplicationContext : Closing org.springframework.context.annotation.AnnotationConfigApplicationContext@43556938: startup date [Wed May 23 19:53:22 UTC 2018]; root of context hierarchy
+   2018-05-23T15:53:25.31-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:25.319  INFO 7 --- [       Thread-2] o.s.c.support.DefaultLifecycleProcessor  : Stopping beans in phase 0
+   2018-05-23T15:53:25.32-0400 [APP/TASK/warm-it-up/0] OUT 2018-05-23 19:53:25.321  INFO 7 --- [       Thread-2] o.s.j.e.a.AnnotationMBeanExporter        : Unregistering JMX-exposed beans on shutdown
+   2018-05-23T15:53:25.35-0400 [APP/TASK/warm-it-up/0] OUT Exit status 0
+   2018-05-23T15:53:25.36-0400 [CELL/0] OUT Cell cd3a6a7e-8bb3-4631-a839-296095130133 stopping instance c549065a-3a87-40af-9b45-44a18900c3ca
+   2018-05-23T15:53:25.36-0400 [CELL/0] OUT Cell cd3a6a7e-8bb3-4631-a839-296095130133 destroying container for instance c549065a-3a87-40af-9b45-44a18900c3ca
+   2018-05-23T15:53:25.77-0400 [CELL/0] OUT Cell cd3a6a7e-8bb3-4631-a839-296095130133 successfully destroyed container for instance c549065a-3a87-40af-9b45-44a18900c3ca
+
+```
+
+Note: Logs information from all 6 invocations of the task will be in this log.
 
