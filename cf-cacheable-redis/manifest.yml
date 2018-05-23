@@ -1,10 +1,9 @@
 ---
 applications:
-- name: cacheable-redis
+- name: cacheable-redis-luke
   memory: 1G
   instances: 1
   path: target/cacheable-redis.jar
   buildpack: https://github.com/cloudfoundry/java-buildpack
-  random-route: true
   services:
     - my-redis
